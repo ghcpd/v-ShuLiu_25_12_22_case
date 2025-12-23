@@ -192,3 +192,4 @@ A script named **`run_tests`** (or `run_tests.sh` / `run_tests.ps1`) must:
 | Display 50,000 users | < 120 ms |
 | Filter 50,000 users  | < 15 ms  |
 | ID lookup            | < 0.5 ms |
+
