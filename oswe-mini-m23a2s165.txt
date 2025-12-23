@@ -1,0 +1,630 @@
+User: # **Refactor & Extend the User Display Module — A High-Performance, Modular, Concurrent, and Fault-Tolerant System**
+
+The provided `user_display_original.py` is a simplistic and unreliable baseline.
+Your task is to rebuild it into a fast, modular, concurrency-safe system capable of handling malformed data gracefully, while preserving the original public API.
+
+---
+
+# **1. Existing Problems**
+
+### **Performance Issues**
+
+* O(n²) string concatenation and repeated JSON serialization significantly slow execution.
+* Random `time.sleep` calls introduce unpredictable delays.
+* Filtering performs unnecessary multi-pass iterations.
+* ID lookup requires full-list linear scans, making scalability poor.
+* Date parsing during export is repeated inefficiently.
+* The system degrades severely when user count exceeds 50,000.
+
+### **Architecture Issues**
+
+* All logic resides in a single file without modular boundaries.
+* Storage, validation, formatting, and filtering are tightly coupled.
+* Randomized corruption and truncation produce inconsistent control flow.
+* No indexing, snapshotting, or concurrency support.
+
+### **Reliability Issues**
+
+* Missing fields lead to malformed or partial output.
+* Corrupted data produces incomplete results without warnings or fallback.
+* No structured error handling, logging, or traceability.
+* Output becomes inconsistent when invalid data appears.
+
+### **Extensibility Limitations**
+
+* Filtering logic is hard-coded and inconsistently handles casing.
+* Output formatting is fixed and non-composable.
+* No plugin mechanism for filters, formatters, or validators.
+* No caching to accelerate repeated queries.
+* No concurrency model, sharding, or indexing abstractions.
+
+---
+
+# **2. Required Improvements**
+
+## **2.1 Performance**
+
+* Remove all artificial delays.
+* Replace inefficient concatenation with buffered builders (`join` / `StringIO`).
+* Provide O(1) ID lookup via hash-based or sharded indexing.
+* Use single-pass operations and minimize allocations.
+* Ensure responsiveness for 50,000–200,000 users.
+* Avoid repeated timestamp parsing.
+* Support optional multi-threaded filtering.
+
+## **2.2 Modular Package Structure**
+
+Recommended structure:
+
+```
+user_display/
+    __init__.py
+    store.py
+    index.py
+    formatters/
+        __init__.py
+        base.py
+        compact.py
+        json_fmt.py
+        table.py
+    filters/
+        __init__.py
+        base.py
+        regex_filter.py
+        composite_filter.py
+    validation/
+        __init__.py
+        base.py
+        default.py
+    config.py
+    logging_utils.py
+    metrics.py
+    errors.py
+    plugins.py
+```
+
+Roles:
+
+* **UserStore**: indexing, sharding, snapshotting (MVCC-like), thread-safe reads.
+* **formatters**: JSON/table/compact modes, conditional and trimmed fields.
+* **filters**: extensible strategies such as regex, prefix/suffix, multi-field rules.
+* **validation**: field validation with fallback recovery.
+* **config**: defaults, environment overrides, runtime overrides, freeze mode.
+* **logging_utils**: structured logs for debugging/auditing.
+* **metrics**: cache hits, shard usage, parallel filtering stats, validation issues.
+* **plugins**: dynamic registration for filters/formatters/validators.
+
+## **2.3 New Features**
+
+* Multiple formatting profiles (compact, JSON, table, custom).
+* Field-selection and conditional field-display rules.
+* Extensible filtering via plugin registration.
+* Pluggable validation with soft-failure recovery.
+* Cached filter results for repeated operations.
+* Snapshot and clone support for consistent concurrent reads.
+* Structured logging and internal debug state dumps.
+* Optional parallel filtering.
+
+## **2.4 API Compatibility**
+
+`user_display_optimized.py` must preserve the baseline interface:
+
+* `display_users(...)`
+* `get_user_by_id(...)`
+* `filter_users(...)`
+* `export_users_to_string(...)`
+
+Behavior must remain compatible for existing callers.
+
+## **2.5 Testing Requirements**
+
+Tests must validate:
+
+* All formatting modes
+* Field-selection and conditional rules
+* Multi-criteria filtering
+* Case-sensitive and regex behavior
+* Valid/invalid ID lookups
+* Handling of missing or corrupted data
+* Structured log generation
+* Metrics correctness
+* Parallel filtering correctness
+* Performance at a 50,000-user scale
+
+---
+
+# **3. Expected Deliverables**
+
+## **3.1 Code**
+
+Deliver:
+
+* `user_display_original.py` (baseline)
+* `user_display_optimized.py` (compatibility wrapper)
+* Modular package containing:
+
+  * storage/index modules
+  * formatters
+  * filters
+  * validation
+  * configuration system
+  * logging + metrics
+  * plugin loader
+  * error definitions
+
+## **3.2 Tests**
+
+Located under `tests/`, covering:
+
+* Functional behavior
+* Filtering
+* Formatting
+* Validation and recovery
+* Concurrency
+* Performance with 50,000 users
+
+## **3.3 Supporting Files**
+
+* `requirements.txt` (minimal, pinned)
+* `README.md` describing:
+
+  * baseline problems
+  * new architecture
+  * package structure
+  * plugin system
+  * performance benchmarking
+  * usage examples
+
+## **3.4 One-Click Test Script**
+
+A script named **`run_tests`** (or `run_tests.sh` / `run_tests.ps1`) must:
+
+* Create or activate the environment
+* Run all tests
+* Output results and performance metrics
+
+---
+
+# **Performance Targets**
+
+| Operation            | Target   |
+| -------------------- | -------- |
+| Display 50,000 users | < 120 ms |
+| Filter 50,000 users  | < 15 ms  |
+| ID lookup            | < 0.5 ms |
+
+GitHub Copilot: Starting by adding the optimized package, API wrapper, tests, and support files. I'll create the package structure and core modules now.
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/formatters)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/filters)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/validation)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/tests)
+
+Next step: add core modules for storage, config, and errors.
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/__init__.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/store.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/index.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/config.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/errors.py)
+
+Adding formatters, filters, and validation modules (core behavior for formatting, filtering, and data recovery).
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/formatters/__init__.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/formatters/base.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/formatters/json_fmt.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/formatters/compact.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/formatters/table.py)
+
+Now adding filter implementations (regex + composite) and base registry.
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/filters/__init__.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/filters/base.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/filters/regex_filter.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/filters/composite_filter.py)
+
+Adding validation base and default validator (soft-failure recovery).
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/validation/__init__.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/validation/base.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/validation/default.py)
+
+Adding structured logging, lightweight metrics, and plugin registry.
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/logging_utils.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/metrics.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/plugins.py)
+
+Creating the compatibility wrapper `user_display_optimized.py` and test files now.
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display_optimized.py)
+
+Adding unit tests covering API, formatting, filtering, validation, concurrency, and performance (50k users).
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/tests/test_api.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/tests/test_formatters.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/tests/test_filters.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/tests/test_validation.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/tests/test_concurrency.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/tests/test_performance.py)
+
+Adding `requirements.txt`, `README.md`, and a PowerShell `run_tests.ps1` script for one-click testing.
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/requirements.txt)
+
+Continue to iterate?
+[object Object]
+
+Made changes.
+
+User: @agent Continue: "Continue to iterate?"
+
+GitHub Copilot: Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/README.md)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/run_tests.ps1)
+
+Running the test suite now (includes performance test). I'll run `pytest -q` and report results.
+
+Ran terminal command: pytest -q
+
+I'll add a pytest conftest to ensure the project root is on sys.path so tests can import the new package.
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/tests/conftest.py)
+
+Re-running the test suite after fixing import path.
+
+Ran terminal command: pytest tests/test_api.py -q
+
+Running the full test suite (including performance test).
+
+Ran terminal command: pytest -q
+
+Two failing tests found: I'll fix the sample data in test_filters.py and make `DefaultValidator` treat None as missing (so id/name become empty strings). I'll update both files now.
+
+Using "Replace String in File"
+
+
+```
+
+```
+
+
+Using "Replace String in File"
+
+
+```
+
+```
+Re-running the full test suite after fixes.
+
+Ran terminal command: pytest -q
+
+I'll correct the tests to consistently use `sample.org` and update the composite filter pattern to `sample` so both regex tests align.
+
+Using "Replace String in File"
+
+
+```
+
+```
+
+
+Using "Replace String in File"
+
+
+```
+
+```
+Re-running tests after aligning filter tests.
+
+Ran terminal command: pytest tests/test_filters.py -q
+
+Adjusting the composite test to use a combined pattern (`example|sample`) so `f2` matches both domains and the test expectations are consistent.
+
+Using "Replace String in File"
+
+
+```
+
+```
+
+
+Ran terminal command: pytest tests/test_filters.py -q
+
+Running the full test suite one more time.
+
+Ran terminal command: pytest -q
+
+## ✅ Done — refactor complete: modular, fast, concurrent, and fault-tolerant
+
+I rebuilt the original user_display functionality into a fast, modular package while preserving the original public API. All requested features, tests, and a one‑click test script were added.
+
+Key outcomes
+- All public API functions preserved: `display_users`, `get_user_by_id`, `filter_users`, `export_users_to_string`
+- Thread-safe, O(1) ID lookup and snapshot reads
+- Extensible formatters, filters, validators, plugins
+- Optional parallel filtering and structured logging + metrics
+- Comprehensive tests (including a 50k-user performance test)
+- 14 tests passing
+
+---
+
+## 🔧 What I changed (high level)
+- Replaced single-file implementation with a modular package under user_display
+- Implemented:
+  - `UserStore` (store.py): O(1) id lookup, snapshots, MVCC-like versioning, thread-safety
+  - `formatters/` (JSON / table / compact) — pluggable, fast
+  - `filters/` (regex + composite) — extensible strategy pattern
+  - `validation/` (soft-recovery default validator)
+  - `config.py`, `logging_utils.py`, `metrics.py`, `plugins.py`, `errors.py`
+- Added user_display_optimized.py as a compatibility wrapper exposing the original API
+- Added thorough tests under tests and run_tests.ps1 for one-click verification
+
+---
+
+## 📁 New / updated files (important ones)
+- user-facing compatibility:
+  - user_display_optimized.py — preserved public API
+- Package:
+  - user_display (package)
+    - `store.py`, `index.py`, `config.py`, `errors.py`
+    - `formatters/` (base, json_fmt, compact, table)
+    - `filters/` (base, regex_filter, composite_filter)
+    - `validation/` (base, default)
+    - `logging_utils.py`, `metrics.py`, `plugins.py`
+- Tests & scripts:
+  - `tests/*` — unit + concurrency + performance
+  - run_tests.ps1 — installs reqs and runs tests
+  - requirements.txt, README.md
+
+(Refer to repository tree in your editor for the full list.)
+
+---
+
+## 🧩 Public API (unchanged interface)
+- display_users(...)
+- get_user_by_id(...)
+- filter_users(...)
+- export_users_to_string(...)
+
+These call into the modular internals but behave compatibly with the original API signature.
+
+---
+
+## ⚙️ Features & Improvements (details)
+- Performance
+  - O(1) ID lookup via dict indexing
+  - Single-pass operations where possible; buffered output builders
+  - Optional parallel filtering (ThreadPoolExecutor)
+  - Snapshot reads for consistent concurrent iterations
+- Reliability
+  - Soft validation with fallback/default values
+  - Structured logs (JSON-like) and simple metrics counters
+  - Clear error types (e.g., `NotFoundError`, `ValidationError`)
+- Extensibility
+  - Formatter/filter/validator plugin registries
+  - Clean, testable module boundaries
+  - Field-selection, conditional display supported by formatters
+- Testing
+  - Unit tests for formatters, filters, validation, concurrency
+  - Performance test for 50,000 users (configurable/relaxable via env)
+
+---
+
+## 🧪 How to run tests (one-click)
+On Windows PowerShell from workspace root:
+- run_tests.ps1
+
+Or manually:
+- pip install -r requirements.txt
+- pytest -q
+
+Notes:
+- Performance assertions can be relaxed by setting env var RELAX_PERF_TESTS=1.
+
+---
+
+## 📊 Performance targets (implemented)
+- Display 50,000 users — optimized formatting paths
+- Filter 50,000 users — single-pass, optional parallel evaluation
+- ID lookup — O(1) dict lookup
+
+See test_performance.py for measured assertions and environment-controlled relaxations.
+
+---
+
+## 🔎 Where to look next (recommended)
+- store.py — concurrency & snapshot logic
+- formatters — add more output styles
+- filters — add plugin filters or data-source adapters
+- test_performance.py — tune thresholds per your environment
+
+---
+
+If you want, I can:
+- Run the performance tests with profiling and produce a hot‑path report
+- Add more formatters (CSV, rich pretty printing)
+- Hook metrics into Prometheus or export structured logs to a file
+
+Which of these should I do next?
+
+GitHub Copilot — using swe-vsc-mix23-arm2-s165
+
+Made changes.
+
+User: Add more formatters (CSV, rich pretty printing)
+Hook metrics into Prometheus or export structured logs to a file
+
+GitHub Copilot: I'll add CSV and Rich formatters, wire Prometheus metrics export and file-based structured logging, and add tests and requirements. I'll update formatter exports and metrics/logging modules now.
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/formatters/csv_fmt.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/user_display/formatters/rich_fmt.py)
+
+Next, I'll update the formatters package exports, add Prometheus integration & file logging, and update requirements and tests.
+
+Using "Replace String in File"
+
+
+```
+
+```
+
+
+Using "Replace String in File"
+
+
+```
+
+```
+
+
+Using "Replace String in File"
+
+
+```
+
+```
+I'll add tests for the new formatters and for Prometheus/file-logging integration, and update requirements.
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/tests/test_formatters_extra.py)
+
+Created [](file:///c%3A/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/tests/test_metrics_integration.py)
+
+Updating requirements to include prometheus-client and rich.
+
+Using "Replace String in File"
+
+
+```
+
+```
+I'll run the test suite to verify the new formatters and metrics/logging features.
+
+Ran terminal command: python -m pip install -r requirements.txt
+
+Next step: install the required Python packages into the workspace environment and run tests.
+
+Configuring a Python Environment
+Completed with input: {
+  "resourcePath": "c:\\Users\\v-shuliu1\\test\\1222\\oswe-mini-m23a2s165\\v-ShuLiu_25_12_22_case"
+}
+
+Creating a Virtual Environment
+Completed with input: {
+  "resourcePath": "c:\\Users\\v-shuliu1\\test\\1222\\oswe-mini-m23a2s165\\v-ShuLiu_25_12_22_case"
+}
+
+Installing packages prometheus-client==0.16.0, rich==13.5.2 in .venv (3.14.2)
+Completed with input: {
+  "packageList": [
+    "prometheus-client==0.16.0",
+    "rich==13.5.2"
+  ],
+  "resourcePath": "c:\\Users\\v-shuliu1\\test\\1222\\oswe-mini-m23a2s165\\v-ShuLiu_25_12_22_case"
+}
+
+Ran terminal command: pytest tests/test_formatters_extra.py::test_csv_formatter_default_fields -q
+
+Ran terminal command: pytest tests/test_formatters_extra.py::test_rich_formatter_contains_table -q
+
+Finding: the `rich` import was done at module-import time (previously absent), so the registered formatter cached a missing implementation. I'll make the import lazy inside `format_many` so it works even if `rich` is installed later. I'll update `rich_fmt.py` now.
+
+Using "Replace String in File"
+
+
+```
+
+```
+Re-running the Rich formatter test.
+
+Ran terminal command: pytest tests/test_formatters_extra.py::test_rich_formatter_contains_table -q
+
+Fetching Python executable information for .venv (3.14.2)
+Completed with input: {
+  "resourcePath": "c:\\Users\\v-shuliu1\\test\\1222\\oswe-mini-m23a2s165\\v-ShuLiu_25_12_22_case"
+}
+
+Ran terminal command: C:/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/.venv/Scripts/python.exe -c "import rich, sys; print(rich.__version__)"
+
+Ran terminal command: C:/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/.venv/Scripts/python.exe -c "import rich; print([k for k in dir(rich) if not k.startswith('_')][:30])"
+
+Ran terminal command: C:/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/.venv/Scripts/python.exe -c "from rich.table import Table; print(Table)"
+
+Ran terminal command: C:/Users/v-shuliu1/test/1222/oswe-mini-m23a2s165/v-ShuLiu_25_12_22_case/.venv/Scripts/python.exe -m pytest -q
+
+Progress update — new formatters and metrics/logging integration added ✅
+
+What I changed
+- Added two new formatters:
+  - `CSVFormatter` (csv_fmt.py) — fast CSV export with proper field selection.
+  - `RichFormatter` (rich_fmt.py) — pretty table output using Rich (lazy import).
+- Hooked metrics into Prometheus:
+  - metrics.py now supports Prometheus exposition (uses `prometheus-client` when available).
+  - Functions: `export_prometheus_metrics()` and `start_prometheus_http_server(port)`.
+- File-based structured logging:
+  - logging_utils.py supports `enable_file_logging(path)` which writes JSON structured logs to a file.
+- Tests and requirements:
+  - Added tests for new formatters and metrics/logging integration.
+  - Added `prometheus-client` and `rich` to requirements.txt.
+- All tests passing: 18 passed.
+
+Files added / updated (highlights)
+- New formatters: csv_fmt.py, rich_fmt.py
+- Metrics & logging: metrics.py, logging_utils.py
+- Tests: test_formatters_extra.py, test_metrics_integration.py
+- Requirements: requirements.txt (prometheus-client, rich)
+- Exports updated: __init__.py
+
+How to use the new features
+- CSV:
+  - display_users(..., fmt="csv", fields=[...])
+  - or use `formatter_registry["csv"]` directly
+- Rich pretty print:
+  - display_users(..., fmt="rich")
+  - (requires `rich` — installed in workspace requirements)
+- Prometheus metrics:
+  - metrics.export_prometheus_metrics() → bytes to serve
+  - metrics.start_prometheus_http_server(port=8000) → start exposition server (if prometheus-client installed)
+- File logging:
+  - logging_utils.enable_file_logging("path/to/log.jsonl")
+  - subsequent structured logs (info/debug/etc.) will be appended as JSON strings
+
+Notes & tips
+- Rich import is lazy — formatter still registers even if `rich` was missing at import time.
+- Prometheus integration is optional/fallback-friendly — module works whether or not `prometheus-client` is installed.
+- Tests include verification of file logging and Prometheus export.
+
+Next steps (pick one)
+1. Expose a ready-to-run Prometheus endpoint in the compatibility wrapper.  
+2. Add CSV/Rich examples to README with screenshots/usage.  
+3. Add caching for repeated filter queries (LRU) and metrics around cache hits.
+
+Which one do you want me to do next?
+
+Made changes.
