@@ -1,0 +1,2 @@
+# minimal runtime requirements
+pytest>=7.0
