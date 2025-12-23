@@ -1,0 +1,9 @@
+# Python runtime (3.8+)
+python>=3.8
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+
+# No external dependencies required for core functionality
+# The system uses only Python standard library
